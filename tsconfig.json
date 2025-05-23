@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2024",
+    "types": ["jest"],
     "outDir": "./dist",
     "rootDir": "./src",
     "module": "esnext",

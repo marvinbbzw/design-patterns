@@ -8,3 +8,9 @@ test("RectangleAdapter adapts Quadratic as a Rectangular object", () => {
   expect(Calculator.getPerimeter(adapted)).toBeCloseTo(12);
   expect(Calculator.getDiagonal(adapted)).toBeCloseTo(Math.sqrt(18));
 });
+
+test("Calculator.getWidthHeightRatio works for Square via Adapter", () => {
+  const square = new Square(5);
+  const adapted = new RectangleAdapter(square);
+  expect(Calculator.getWidthHeightRatio(adapted)).toBeCloseTo(1.0);
+});
