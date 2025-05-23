@@ -1,106 +1,67 @@
-enum State {
+import {
+  Editor,
   CleanUnsaved,
   CleanSaved,
-  DirtyUnsaved,
-  DirtySaved,
-}
+} from "./text-editor-state";
 
 const textArea = document.getElementById("text") as HTMLTextAreaElement;
-let state = State.CleanUnsaved;
-let openFile = undefined;
+const saveButton = document.getElementById("save-button");
+const saveAsButton = document.getElementById("save-as-button");
+const newButton = document.getElementById("new-button");
+
+const editor = new Editor(new CleanUnsaved());
 
 document.addEventListener("DOMContentLoaded", () => {
   showFiles(listFiles(), "files-list");
+
   textArea.addEventListener("input", () => {
-    if (state == State.CleanSaved) {
-      state = State.DirtySaved;
-      setStateLabel(`${openFile} *`);
-    } else if (state == State.CleanUnsaved) {
-      state = State.DirtyUnsaved;
-      setStateLabel("*");
-    }
+    editor.input(textArea.value);
   });
-  const saveAsButton = document.getElementById("save-as-button");
-  saveAsButton.addEventListener("click", () => {
-    const content = textArea.value;
-    let filename = prompt("Enter a File Name", "");
-    if (filename.trim() != "") {
-      if (!filename.endsWith(".txt")) {
-        filename = filename + ".txt";
-      }
-      localStorage.setItem(filename, content);
-      state = State.CleanSaved;
-      openFile = filename;
-      setStateLabel(filename);
-      showFiles(listFiles(), "files-list");
-    }
+
+  saveAsButton?.addEventListener("click", () => {
+    editor.saveAs();
+    showFiles(listFiles(), "files-list");
   });
-  const saveButton = document.getElementById("save-button");
-  saveButton.addEventListener("click", () => {
-    const content = textArea.value;
-    if (state == State.CleanSaved || state == State.DirtySaved) {
-      localStorage.setItem(openFile, content);
-      state = State.CleanSaved;
-      setStateLabel(openFile);
-      showFiles(listFiles(), "files-list");
-    } else {
-      let filename = prompt("Enter a File Name", "");
-      if (filename.trim() != "") {
-        if (!filename.endsWith(".txt")) {
-          filename = filename + ".txt";
-        }
-        localStorage.setItem(filename, content);
-        state = State.CleanSaved;
-        openFile = filename;
-        setStateLabel(filename);
-        showFiles(listFiles(), "files-list");
-      }
-    }
+
+  saveButton?.addEventListener("click", () => {
+    editor.save();
+    showFiles(listFiles(), "files-list");
   });
-  const newButton = document.getElementById("new-button");
-  newButton.addEventListener("click", () => {
-    state = State.CleanUnsaved;
+
+  newButton?.addEventListener("click", () => {
+    editor.newFile();
     textArea.value = "";
-    openFile = undefined;
-    setStateLabel("_");
   });
+
   document.addEventListener("contextmenu", (event) => {
     alert("Wanna steal my source code, huh!?");
     event.preventDefault();
-    return false;
   });
 });
 
-function setStateLabel(value: string) {
-  const stateLabel = document.getElementById("state-label");
-  stateLabel.innerText = value;
-}
-
 function showFiles(files: string[], parentId: string) {
-  const parent = document.getElementById(parentId);
-  while (parent.hasChildNodes()) {
-    parent.removeChild(parent.firstChild);
-  }
+  const parent = document.getElementById(parentId)!;
+  while (parent.firstChild) parent.removeChild(parent.firstChild);
   for (const file of files) {
     const item = document.createElement("li");
     const link = document.createElement("a");
     link.innerHTML = file;
-    item.appendChild(link);
-    parent.append(item);
     link.addEventListener("click", () => {
       const content = localStorage.getItem(file);
-      openFile = file;
-      textArea.value = content;
-      state = State.CleanSaved;
-      setStateLabel(file);
+      editor["fileName"] = file;
+      editor.text = content ?? "";
+      textArea.value = content ?? "";
+      editor.setState(new CleanSaved());
     });
+    item.appendChild(link);
+    parent.append(item);
   }
 }
 
 function listFiles(): string[] {
   const files: string[] = [];
   for (let i = 0; i < localStorage.length; i++) {
-    files.push(localStorage.key(i));
+    files.push(localStorage.key(i)!);
   }
   return files;
 }
